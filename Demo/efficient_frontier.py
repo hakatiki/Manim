@@ -14,7 +14,7 @@ class EfficientFrontier(Scene):
         returns = self.calculate_returns(data)
         
         # Step 2: Simulate portfolios
-        results = self.efficient_frontier(returns, num_portfolios=100)  # Increased number of portfolios for better visualization
+        results = self.efficient_frontier(returns, num_portfolios=20)  # Increased number of portfolios for better visualization
         
         # Step 3: Calculate exact efficient frontier
         desired_returns, exact_risks = self.exact_efficient_frontier(returns)
@@ -94,9 +94,9 @@ class EfficientFrontier(Scene):
 
         self.add(axes, x_label, y_label)
 
-        counter = Integer(0).to_corner(UP)#.shift(RIGHT*8)
-        counter_label = Tex("Portfolios Added: ").next_to(counter, LEFT)
-        self.add(counter_label, counter)
+        # counter = Integer(0).to_corner(UP)#.shift(RIGHT*8)
+        # counter_label = Tex("Portfolios Added: ").next_to(counter, LEFT)
+        # self.add(counter_label, counter)
 
         # Plot simulated portfolios
         sharpe_ratios = results[2]
@@ -104,18 +104,20 @@ class EfficientFrontier(Scene):
         max_sharpe = np.max(sharpe_ratios)
         normalized_sharpes = (sharpe_ratios - min_sharpe) / (max_sharpe - min_sharpe)
         
-        num_dots_middle = 100
+        num_dots_middle = 15
         num_dots = len(results[0])
 
         scatter_slow = VGroup()
         for i in range(10):
-            if results[1][i] > 0.65 or results[1][i] < 0.36 or  results[0][i] > 6.4  :
+            if results[1][i] > 0.65 or results[1][i] < 0.36 or  results[0][i] > 6.4:
                 continue
             dot = Dot(point=axes.c2p(results[0][i], results[1][i]), color=interpolate_color(RED, GREEN, normalized_sharpes[i]), radius=0.08)
             scatter_slow.add(dot)
-            counter.increment_value()
-            self.play(Create(dot), counter.animate.set_value(counter.get_value()), run_time=0.5)
+            
+            # scatter_slow.add( counter)
+            # self.play(Create(dot), counter.animate.set_value(counter.get_value()), run_time=0.5)
         self.add(axes, scatter_slow)
+        self.play(Create(scatter_slow),  run_time=5)
         
         scatter_middle = VGroup()
         for i in range(10, num_dots_middle):
@@ -123,19 +125,21 @@ class EfficientFrontier(Scene):
                 continue
             dot = Dot(point=axes.c2p(results[0][i], results[1][i]), color=interpolate_color(RED, GREEN, normalized_sharpes[i]), radius=0.08)
             scatter_middle.add(dot)
-            counter.increment_value()
-            self.play(Create(dot), counter.animate.set_value(counter.get_value()), run_time=0.05)
+        #     counter.increment_value()
+        #     self.play(Create(dot), counter.animate.set_value(counter.get_value()), run_time=0.05)
         self.add(axes, scatter_middle)
-        
+        self.play(Create(scatter_middle),  run_time=5)
+
         scatter_fast = VGroup()
         for i in range(num_dots_middle, num_dots):
             if results[1][i] > 0.65 or results[1][i] < 0.36 or  results[0][i] > 6.4  :
                 continue
             dot = Dot(point=axes.c2p(results[0][i], results[1][i]), color=interpolate_color(RED, GREEN, normalized_sharpes[i]), radius=0.08)
             scatter_fast.add(dot)
-            counter.increment_value()
-            self.play(Create(dot), counter.animate.set_value(counter.get_value()), run_time=0.01)
+            # counter.increment_value()
+            # self.play(Create(dot), counter.animate.set_value(counter.get_value()), run_time=0.01)
         self.add(axes, scatter_fast)
+        self.play(Create(scatter_fast),  run_time=10)
 
         scatter = scatter_fast + scatter_slow + scatter_middle
 
@@ -152,78 +156,8 @@ class EfficientFrontier(Scene):
 
         self.add(exact_points, exact_frontier)
         self.play(Create(exact_frontier), run_time=2)
-        self.play(FadeOut(scatter),FadeOut(counter_label) ,FadeOut(counter))
+        self.play(FadeOut(scatter))#,íFadeOut(counter_label) ,FadeOut(counter))
         # self.play(FadeOut(counter_label), )
         
         self.wait(2)
 
-# To run this script, save it as a .py file and execute it with Manim using:
-# manim -pql your_script.py EfficientFrontier
-from manim import *
-import numpy as np
-
-# # Function to create asset returns with zero correlation
-# def create_uncorrelated_returns(timesteps, num_assets, std_dev):
-#     np.random.seed(42)
-#     returns = []
-#     for _ in range(num_assets):
-#         trend = np.exp(np.linspace(0, 2, timesteps))  # Exponential trend
-#         noise = np.random.normal(0, std_dev, timesteps)  # Same standard deviation
-#         asset_returns = trend + noise
-#         returns.append(asset_returns)
-#     return np.array(returns)
-
-# class UncorrelatedAssets(Scene):
-#     def construct(self):
-#         title = Text("Adding Uncorrelated Equities to Your Portfolio").scale(1.2)
-#         self.play(Write(title))
-#         self.wait(2)
-#         self.play(title.animate.to_edge(UP))
-
-#         timesteps = 100
-#         std_dev = 0.2
-
-#         # Function to plot returns and portfolio volatility
-#         def plot_returns_and_volatility(num_assets, shift_amount):
-#             asset_returns = create_uncorrelated_returns(timesteps, num_assets, std_dev)
-#             portfolio_returns = np.mean(asset_returns, axis=0)
-
-#             axes = Axes(
-#                 x_range=[0, timesteps, 10],
-#                 y_range=[0, np.max(portfolio_returns) + 1, 1],
-#                 x_length=6,
-#                 y_length=3,
-#                 axis_config={"color": BLUE}
-#             ).shift(shift_amount + UP * 0.5 + RIGHT * 0.5)
-
-#             x_label = Tex("Time").next_to(axes.x_axis, DOWN, buff=0.3)
-#             y_label = Tex("Returns").next_to(axes.y_axis, LEFT, buff=-1).rotate(90 * DEGREES)
-
-#             self.add(axes, x_label, y_label)
-
-#             for i in range(num_assets):
-#                 asset_line = axes.plot_line_graph(range(timesteps), asset_returns[i], add_vertex_dots=False, line_color=YELLOW)
-#                 self.play(Create(asset_line))
-
-#             portfolio_line = axes.plot_line_graph(range(timesteps), portfolio_returns, add_vertex_dots=False, line_color=RED)
-#             self.play(Create(portfolio_line), Write(Text(f"Portfolio ({num_assets} assets)").next_to(portfolio_line, UP).scale(0.5)))
-#             self.wait(2)
-
-#             return axes, portfolio_line
-
-#         # Demonstrate with increasing number of uncorrelated assets
-#         for num_assets in [2, 5, 10, 20]:
-#             plot_returns_and_volatility(num_assets, shift_amount=DOWN * (num_assets // 5))
-
-#         self.wait(3)
-
-#         explanation = Text(
-#             "As more uncorrelated assets are added to the portfolio, the overall portfolio volatility decreases.\n"
-#             "This demonstrates the benefit of diversification."
-#         ).scale(0.7).to_edge(DOWN)
-
-#         self.play(Write(explanation))
-#         self.wait(3)
-
-# # To run this script, save it as a .py file and execute it with Manim using:
-# # manim -pql your_script.py UncorrelatedAssets
